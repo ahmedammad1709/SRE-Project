@@ -89,7 +89,7 @@ const Signup = () => {
               <Input
                 id="fullName"
                 type="text"
-                placeholder="John Doe"
+                placeholder="Ammad Ahmed"
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 error={!!errors.fullName}

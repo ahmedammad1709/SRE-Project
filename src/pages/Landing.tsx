@@ -12,7 +12,7 @@ const Landing = () => {
             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
               <Bot className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-xl">ReqBot</span>
+            <span className="font-semibold text-xl">Software Requiremnet Bot</span>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login">
