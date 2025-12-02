@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Bot, Eye, EyeOff, Check } from "lucide-react";
+import ThemeToggle from "@/components/ui/theme-toggle";
 import { toast } from "@/hooks/use-toast";
 
 const Signup = () => {
@@ -59,7 +60,7 @@ const Signup = () => {
     if (validateForm()) {
       toast({
         title: "Account created!",
-        description: "Welcome to ReqBot (demo mode)",
+        description: "Welcome to Softwate Requiremnet Bot (demo mode)",
       });
       navigate("/dashboard");
     }
@@ -69,12 +70,13 @@ const Signup = () => {
     <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
-            <Bot className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <span className="font-semibold text-2xl">ReqBot</span>
-        </Link>
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <Link to="/" className="flex items-center gap-2">
+            <img src="/logo.png" alt="Softwate Requiremnet Bot" className="w-12 h-12 rounded-xl object-contain" />
+            <span className="font-semibold text-2xl">Softwate Requiremnet Bot</span>
+          </Link>
+          <ThemeToggle />
+        </div>
 
         {/* Signup Card */}
         <div className="bg-card rounded-2xl shadow-card p-8 border border-border animate-slide-up">

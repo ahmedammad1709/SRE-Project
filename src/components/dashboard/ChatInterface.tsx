@@ -15,7 +15,7 @@ const initialMessages: Message[] = [
   {
     id: "1",
     role: "bot",
-    content: "Hello! I'm ReqBot, your AI assistant for gathering software requirements. Tell me about your project and I'll help you capture all the necessary requirements.",
+    content: "Hello! I'm Softwate Requiremnet Bot, your AI assistant for gathering software requirements. Tell me about your project and I'll help you capture all the necessary requirements.",
     timestamp: new Date(),
   },
 ];
@@ -88,7 +88,7 @@ const ChatInterface = ({ projectName }: ChatInterfaceProps) => {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-semibold">{projectName || "New Project"}</h3>
-            <p className="text-sm text-muted-foreground">Chat with ReqBot to gather requirements</p>
+            <p className="text-sm text-muted-foreground">Chat with Softwate Requiremnet Bot to gather requirements</p>
           </div>
           <Button variant="outline" size="sm" onClick={handleGenerateSummary}>
             <FileText className="w-4 h-4 mr-2" />
