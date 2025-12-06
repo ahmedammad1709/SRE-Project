@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 
 const Signup = () => {
   const navigate = useNavigate();
+  const [step, setStep] = useState<'form' | 'otp'>('form');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -18,6 +19,9 @@ const Signup = () => {
     confirmPassword: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [otp, setOtp] = useState("");
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
 
   const passwordRequirements = [
     { label: "At least 8 characters", met: formData.password.length >= 8 },
@@ -54,15 +58,59 @@ const Signup = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (validateForm()) {
-      toast({
-        title: "Account created!",
-        description: "Welcome to Softwate Requiremnet Bot (demo mode)",
+    if (!validateForm()) return;
+    try {
+      setSendingOtp(true);
+      const res = await fetch(`/api/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
+        }),
       });
-      navigate("/dashboard");
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to send OTP');
+      }
+      setStep('otp');
+      toast({ title: 'OTP sent', description: data.previewUrl ? `Preview: ${data.previewUrl}` : 'Check your email for the code' });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: 'Signup failed', description: msg, variant: 'destructive' });
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    try {
+      if (!otp || otp.length !== 6) {
+        toast({ title: 'Invalid OTP', description: 'Enter the 6-digit code' });
+        return;
+      }
+      setVerifyingOtp(true);
+      const res = await fetch(`/api/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, otp }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'OTP verification failed');
+      }
+      toast({ title: 'Account created', description: 'You can now sign in' });
+      navigate('/login');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: 'Verification failed', description: msg, variant: 'destructive' });
+    } finally {
+      setVerifyingOtp(false);
     }
   };
 
@@ -85,6 +133,7 @@ const Signup = () => {
             <p className="text-muted-foreground">Start gathering requirements smarter</p>
           </div>
 
+          {step === 'form' && (
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
@@ -181,10 +230,40 @@ const Signup = () => {
               )}
             </div>
 
-            <Button type="submit" className="w-full" size="lg">
-              Create Account
+            <Button type="submit" className="w-full" size="lg" disabled={sendingOtp}>
+              {sendingOtp ? 'Sending OTP...' : 'Send OTP'}
             </Button>
           </form>
+          )}
+
+          {step === 'otp' && (
+            <div className="space-y-5">
+              <div className="text-center">
+                <p className="text-muted-foreground">Enter the 6-digit code sent to</p>
+                <p className="font-medium">{formData.email}</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="otp">Verification Code</Label>
+                <Input
+                  id="otp"
+                  inputMode="numeric"
+                  pattern="\\d{6}"
+                  maxLength={6}
+                  placeholder="123456"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                />
+              </div>
+              <Button className="w-full" size="lg" onClick={handleVerify} disabled={verifyingOtp}>
+                {verifyingOtp ? 'Verifying...' : 'Verify & Create Account'}
+              </Button>
+              <div className="text-center">
+                <button type="button" className="text-sm text-primary hover:underline" onClick={() => setStep('form')}>
+                  Change email
+                </button>
+              </div>
+            </div>
+          )}
 
           <p className="text-center text-muted-foreground text-sm mt-6">
             Already have an account?{" "}

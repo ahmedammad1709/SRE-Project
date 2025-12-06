@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,19 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [newProjectName, setNewProjectName] = useState("");
   const [projectStarted, setProjectStarted] = useState(false);
+  const [userName, setUserName] = useState("John Doe");
+  const [userEmail, setUserEmail] = useState("john.doe@example.com");
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("app_user");
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u?.name) setUserName(u.name);
+        if (u?.email) setUserEmail(u.email);
+      }
+    } catch { void 0; }
+  }, []);
 
   const handleStartProject = () => {
     if (!newProjectName.trim()) {
@@ -78,15 +91,11 @@ const Dashboard = () => {
   };
 
   return (
-    <DashboardLayout userName="John Doe">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">Manage your projects and requirements</p>
-        </div>
+    <DashboardLayout userName={userName} activeTab={activeTab} onNavigateTab={setActiveTab}>
+      <div className={`w-full py-8 ${activeTab !== "new-project" ? "px-6" : ""}`}>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-secondary/50 p-1 rounded-xl">
+          <TabsList className="bg-secondary/50 p-1 rounded-xl hidden">
             <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">
               <TrendingUp className="w-4 h-4 mr-2" />
               Overview
@@ -111,6 +120,10 @@ const Dashboard = () => {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6 animate-fade-in">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+              <p className="text-muted-foreground">Manage your projects and requirements</p>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
                 title="Total Projects"
@@ -157,7 +170,7 @@ const Dashboard = () => {
                 New Project
               </Button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
               {dummyProjects.map((project) => (
                 <ProjectCard key={project.id} {...project} />
               ))}
@@ -165,11 +178,13 @@ const Dashboard = () => {
           </TabsContent>
 
           {/* New Project Tab */}
-          <TabsContent value="new-project" className="animate-fade-in">
+          <TabsContent value="new-project" className="animate-fade-in w-full flex justify-center">
             {!projectStarted ? (
-              <div className="max-w-md mx-auto">
-                <div className="bg-card rounded-xl border border-border p-6 shadow-card">
-                  <h2 className="text-xl font-semibold mb-6">Start a New Project</h2>
+              <div className="min-h-[calc(100vh-8rem)] w-full flex items-center justify-center px-4">
+                <div className="bg-card rounded-xl border border-border p-8 shadow-card w-full max-w-[550px]">
+                  <h2 className="text-xl font-semibold mb-6 text-center">
+                    Start a New Project
+                  </h2>
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="projectName">Project Name</Label>
@@ -187,94 +202,91 @@ const Dashboard = () => {
                 </div>
               </div>
             ) : (
-              <div className="max-w-3xl mx-auto">
+              <div className="w-full">
                 <ChatInterface projectName={newProjectName} />
               </div>
             )}
           </TabsContent>
 
+
           {/* Summary Tab */}
           <TabsContent value="summary" className="animate-fade-in">
-            <h2 className="text-xl font-semibold mb-6">Project Summaries</h2>
-            <div className="space-y-4">
-              {dummySummaries.map((summary) => (
-                <div
-                  key={summary.id}
-                  className="p-4 rounded-xl bg-card border border-border shadow-card flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">{summary.projectName}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {summary.requirements} requirements • {summary.date}
-                      </p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    View Summary
-                  </Button>
-                </div>
-              ))}
-
-              {dummySummaries.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                  <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No summaries yet. Start a project to generate summaries.</p>
-                </div>
-              )}
+            <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center">
+              <div className="text-center space-y-3">
+                <FileText className="w-12 h-12 mx-auto opacity-50" />
+                <h2 className="text-2xl font-semibold">No Summary Available</h2>
+                <p className="text-muted-foreground">You can only generate summary by creating a new project.</p>
+                <Button onClick={() => setActiveTab("new-project")}>Create New Project</Button>
+              </div>
             </div>
           </TabsContent>
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="animate-fade-in">
-            <div className="max-w-2xl">
-              <h2 className="text-xl font-semibold mb-6">Account Settings</h2>
-              
-              <div className="bg-card rounded-xl border border-border p-6 shadow-card space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full gradient-primary flex items-center justify-center">
-                    <User className="w-8 h-8 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">John Doe</h3>
-                    <p className="text-muted-foreground">john.doe@example.com</p>
-                  </div>
-                </div>
+            <div className="min-h-[calc(100vh-8rem)] flex items-center w-full">
+              <div className="w-full space-y-6 max-w-2xl mx-auto">
+                <h2 className="text-xl font-semibold text-center">Account Settings</h2>
 
-                <div className="border-t border-border pt-6 space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="settingsName">Full Name</Label>
-                    <Input id="settingsName" defaultValue="John Doe" />
+                <div className="space-y-6">
+                  <div className="bg-card rounded-xl border border-border p-6 shadow-card space-y-4 w-full">
+                    <h3 className="font-semibold text-lg">Profile</h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="settingsName">Full Name</Label>
+                      <Input id="settingsName" defaultValue={userName} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="settingsEmail">Email</Label>
+                      <Input id="settingsEmail" defaultValue={userEmail} />
+                    </div>
+                    <div className="flex justify-end pt-2">
+                      <Button
+                        onClick={() => {
+                          try {
+                            const nameInput = document.getElementById("settingsName") as HTMLInputElement | null;
+                            const emailInput = document.getElementById("settingsEmail") as HTMLInputElement | null;
+                            const name = nameInput?.value || userName;
+                            const email = emailInput?.value || userEmail;
+                            const data = { name, email };
+                            localStorage.setItem("app_user", JSON.stringify(data));
+                            setUserName(name);
+                            setUserEmail(email);
+                            toast({ title: "Profile updated", description: "Your profile has been saved" });
+                          } catch {
+                            toast({ title: "Failed to save", description: "Unable to update profile", variant: "destructive" });
+                          }
+                        }}
+                      >
+                        Save Profile
+                      </Button>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="settingsEmail">Email</Label>
-                    <Input id="settingsEmail" defaultValue="john.doe@example.com" />
-                  </div>
-                </div>
 
-                <div className="border-t border-border pt-6 space-y-4">
-                  <h4 className="font-medium">Change Password</h4>
-                  <div className="space-y-2">
-                    <Label htmlFor="currentPassword">Current Password</Label>
-                    <Input id="currentPassword" type="password" placeholder="Enter current password" />
+                  <div className="bg-card rounded-xl border border-border p-6 shadow-card space-y-4 w-full">
+                    <h3 className="font-semibold text-lg">Change Password</h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="currentPassword">Current Password</Label>
+                      <Input id="currentPassword" type="password" placeholder="Enter current password" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="newPassword">New Password</Label>
+                      <Input id="newPassword" type="password" placeholder="Enter new password" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+                      <Input id="confirmNewPassword" type="password" placeholder="Confirm new password" />
+                    </div>
+                    <div className="flex justify-end pt-2">
+                      <Button onClick={() => toast({ title: "Password updated", description: "Your password has been changed" })}>Update Password</Button>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="newPassword">New Password</Label>
-                    <Input id="newPassword" type="password" placeholder="Enter new password" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
-                    <Input id="confirmNewPassword" type="password" placeholder="Confirm new password" />
-                  </div>
-                </div>
 
-                <div className="flex justify-end">
-                  <Button onClick={() => toast({ title: "Settings saved", description: "Your changes have been saved" })}>
-                    Save Changes
-                  </Button>
+                  <div className="bg-destructive/10 border border-destructive rounded-xl p-6 shadow-card w-full">
+                    <h3 className="font-semibold text-lg text-destructive">Danger Zone</h3>
+                    <p className="text-sm text-muted-foreground mb-4">Deleting your account is permanent and cannot be undone.</p>
+                    <div className="flex justify-end">
+                      <Button variant="destructive" onClick={() => toast({ title: "Account deletion requested", description: "This would delete the account in a real app" })}>Delete Account</Button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

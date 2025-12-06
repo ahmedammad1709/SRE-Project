@@ -33,24 +33,38 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [signingIn, setSigningIn] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (validateForm()) {
-      // Check for admin credentials
-      if (formData.email === "admin@admin.com" && formData.password === "admin") {
-        toast({
-          title: "Welcome back, Admin!",
-          description: "Redirecting to admin dashboard...",
-        });
-        navigate("/admin");
-      } else {
-        toast({
-          title: "Welcome back!",
-          description: "Login successful (demo mode)",
-        });
-        navigate("/dashboard");
+    if (!validateForm()) return;
+    try {
+      setSigningIn(true);
+      const res = await fetch(`/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, password: formData.password }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Login failed');
       }
+      const role = data?.data?.role === 'admin' ? 'admin' : 'user';
+      const apiName = data?.data?.name || data?.name;
+      const email = formData.email;
+      const name = apiName || email.split('@')[0].split(/[._-]/).map((s: string) => s ? s[0].toUpperCase() + s.slice(1) : s).join(' ');
+      try {
+        localStorage.setItem('app_user', JSON.stringify({ name, email }));
+      } catch {
+        void 0;
+      }
+      toast({ title: 'Welcome back!', description: role === 'admin' ? 'Redirecting to admin dashboard' : 'Login successful' });
+      navigate(role === 'admin' ? '/admin' : '/dashboard');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: 'Login failed', description: msg, variant: 'destructive' });
+    } finally {
+      setSigningIn(false);
     }
   };
 
@@ -119,8 +133,8 @@ const Login = () => {
               </button>
             </div>
 
-            <Button type="submit" className="w-full" size="lg">
-              Sign In
+            <Button type="submit" className="w-full" size="lg" disabled={signingIn}>
+              {signingIn ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
 
