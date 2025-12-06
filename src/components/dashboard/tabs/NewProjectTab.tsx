@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { MessageSquare, ArrowLeft } from "lucide-react";
+import { MessageSquare, ArrowLeft, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useConversation } from "@/contexts/ConversationContext";
 import { ChatInterface } from "../ChatInterface";
 
 interface NewProjectTabProps {
@@ -13,6 +14,19 @@ interface NewProjectTabProps {
   setProjectName: (name: string) => void;
   projectId: number | null;
   setProjectId: (id: number | null) => void;
+  onSummaryReady?: (data: {
+    overview?: string;
+    functional?: string[];
+    nonFunctional?: string[];
+    stakeholders?: string[];
+    userStories?: string[];
+    constraints?: string[];
+    risks?: string[];
+    timeline?: string;
+    costEstimate?: string;
+    summary?: string;
+  }) => void;
+  onGoToSummary?: () => void;
 }
 
 export function NewProjectTab({
@@ -22,9 +36,13 @@ export function NewProjectTab({
   setProjectName,
   projectId,
   setProjectId,
+  onSummaryReady,
+  onGoToSummary,
 }: NewProjectTabProps) {
   const { toast } = useToast();
+  const { resetConversation, setProjectId: setContextProjectId } = useConversation();
   const [creating, setCreating] = useState(false);
+  const [generatingSummary, setGeneratingSummary] = useState(false);
 
   const handleStartProject = async () => {
     if (!projectName.trim()) {
@@ -52,7 +70,10 @@ export function NewProjectTab({
       const data = await res.json();
 
       if (data.success && data.data) {
-        setProjectId(data.data.id);
+        const newProjectId = data.data.id;
+        setProjectId(newProjectId);
+        setContextProjectId(newProjectId);
+        resetConversation(); // Reset conversation state for new project
         setProjectStarted(true);
         toast({
           title: `"${projectName}" is ready`,
@@ -77,6 +98,7 @@ export function NewProjectTab({
     setProjectStarted(false);
     setProjectName("");
     setProjectId(null);
+    setContextProjectId(null);
   };
 
   if (!projectStarted) {
@@ -114,14 +136,58 @@ export function NewProjectTab({
 
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={handleBack} className="h-9 w-9">
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">{projectName}</h1>
-          <p className="text-sm text-muted-foreground">Requirement gathering session</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={handleBack} className="h-9 w-9">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">{projectName}</h1>
+            <p className="text-sm text-muted-foreground">Requirement gathering session</p>
+          </div>
         </div>
+        <Button
+          className="gap-2"
+          onClick={async () => {
+            if (!projectId) {
+              return toast({
+                title: "No project",
+                description: "Start a project first to generate summary.",
+                variant: "destructive",
+              });
+            }
+            try {
+              setGeneratingSummary(true);
+              const res = await fetch("/api/generate-summary", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ projectId }),
+              });
+              const data = await res.json();
+              if (!data.success) {
+                throw new Error(data.error || "Failed to generate summary");
+              }
+              onSummaryReady?.(data.data);
+              toast({
+                title: "Summary generated",
+                description: "Redirecting to the Summary tab.",
+              });
+              onGoToSummary?.();
+            } catch (error) {
+              toast({
+                title: "Failed to generate summary",
+                description: error instanceof Error ? error.message : "Could not generate summary.",
+                variant: "destructive",
+              });
+            } finally {
+              setGeneratingSummary(false);
+            }
+          }}
+          disabled={generatingSummary}
+        >
+          <FileText className="h-4 w-4" />
+          {generatingSummary ? "Generating…" : "Generate Summary"}
+        </Button>
       </div>
 
       {projectId ? (

@@ -30,6 +30,18 @@ export default function Dashboard() {
   const [projectStarted, setProjectStarted] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [projectId, setProjectId] = useState<number | null>(null);
+  const [summaryData, setSummaryData] = useState<{
+    overview?: string;
+    functional?: string[];
+    nonFunctional?: string[];
+    stakeholders?: string[];
+    userStories?: string[];
+    constraints?: string[];
+    risks?: string[];
+    timeline?: string;
+    costEstimate?: string;
+    summary?: string;
+  } | null>(null);
   const [user, setUser] = useState<UserData>(DEFAULT_USER);
   const isAdmin = false;
 
@@ -90,10 +102,12 @@ export default function Dashboard() {
             setProjectName={setNewProjectName}
             projectId={projectId}
             setProjectId={setProjectId}
+            onSummaryReady={(data) => setSummaryData(data)}
+            onGoToSummary={() => setActiveTab("summary")}
           />
         );
       case "summary":
-        return <SummaryTab onNewProject={handleNewProject} />;
+        return <SummaryTab onNewProject={handleNewProject} initialData={summaryData || undefined} />;
       case "settings":
         return (
           <SettingsTab

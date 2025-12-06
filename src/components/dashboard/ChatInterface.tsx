@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { useConversation } from "@/contexts/ConversationContext";
 
 interface Message {
   id: number;
@@ -19,12 +20,19 @@ interface ChatInterfaceProps {
 
 export function ChatInterface({ projectId, projectName }: ChatInterfaceProps) {
   const { toast } = useToast();
+  const { setProjectId } = useConversation();
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
+  // Set project ID in context
+  useEffect(() => {
+    setProjectId(projectId);
+  }, [projectId, setProjectId]);
+
   // Gemini API configuration
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
@@ -36,16 +44,28 @@ export function ChatInterface({ projectId, projectName }: ChatInterfaceProps) {
         setLoadingHistory(true);
         const res = await fetch(`/api/chat?projectId=${projectId}`);
         const data = await res.json();
-        if (data.success) {
-          setMessages(data.data || []);
+        if (data.success && data.data && data.data.length > 0) {
+          setMessages(data.data);
+        } else {
+          // Initialize with welcome message if no history
+          const welcomeMessage: Message = {
+            id: Date.now(),
+            role: "bot",
+            content: `Hello! I'm here to help you gather requirements for "${projectName}". Let's start by understanding what you're building. Can you tell me about your project and what problem it aims to solve?`,
+            created_at: new Date().toISOString(),
+          };
+          setMessages([welcomeMessage]);
         }
       } catch (error) {
         console.error("Failed to load chat history:", error);
-        toast({
-          title: "Failed to load chat history",
-          description: "Could not load previous messages.",
-          variant: "destructive",
-        });
+        // Initialize with welcome message on error
+        const welcomeMessage: Message = {
+          id: Date.now(),
+          role: "bot",
+          content: `Hello! I'm here to help you gather requirements for "${projectName}". Let's start by understanding what you're building. Can you tell me about your project and what problem it aims to solve?`,
+          created_at: new Date().toISOString(),
+        };
+        setMessages([welcomeMessage]);
       } finally {
         setLoadingHistory(false);
       }
@@ -54,7 +74,7 @@ export function ChatInterface({ projectId, projectName }: ChatInterfaceProps) {
     if (projectId) {
       loadHistory();
     }
-  }, [projectId, toast]);
+  }, [projectId, projectName]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -77,7 +97,7 @@ export function ChatInterface({ projectId, projectName }: ChatInterfaceProps) {
     setInput("");
     setLoading(true);
 
-    // Build conversation history BEFORE adding the new message
+    // Build conversation history for Gemini
     const historyForGemini = messages.map((msg) => ({
       role: msg.role === "bot" ? "model" : "user",
       parts: [{ text: msg.content }],
@@ -111,57 +131,25 @@ export function ChatInterface({ projectId, projectName }: ChatInterfaceProps) {
 
       const savedUserMessage = saveUserData.data;
 
-      // Step 2: Get Gemini response using REST API
-      // Add system prompt for requirements gathering
-      const systemPrompt = `You are a helpful software requirements engineering assistant. Your role is to help gather and clarify software requirements for a project called "${projectName}". 
-
-Ask thoughtful questions to understand:
-- Functional requirements (what the system should do)
-- Non-functional requirements (performance, security, usability, etc.)
-- User stories and use cases
-- Technical constraints
-- Business rules
-
-Be conversational, professional, and thorough. Guide the user through the requirements gathering process systematically.`;
-
-      // Build contents array for Gemini API
-      const contents = [
-        {
-          role: "user",
-          parts: [{ text: systemPrompt }],
-        },
-        {
-          role: "model",
-          parts: [{ text: "Hello! I'm here to help you gather requirements for your project. Let's start by understanding what you're building. Can you tell me more about your project goals and the main features you envision?" }],
-        },
-        ...historyForGemini,
-        {
-          role: "user",
-          parts: [{ text: userMessage }],
-        },
-      ];
-
-      // Call Gemini REST API
-      const geminiResponse = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      // Step 2: Get Gemini response using conversational API
+      const chatRes = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: contents,
+          projectId,
+          role: "conversation",
+          content: userMessage,
+          conversationHistory: historyForGemini,
+          projectName,
         }),
       });
 
-      if (!geminiResponse.ok) {
-        const errorData = await geminiResponse.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || `Gemini API error: ${geminiResponse.statusText}`);
+      const chatData = await chatRes.json();
+      if (!chatData.success) {
+        throw new Error(chatData.error || "Failed to get response");
       }
 
-      const geminiData = await geminiResponse.json();
-      
-      // Extract text from Gemini response
-      const botResponseText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 
-        "I apologize, but I couldn't generate a response. Please try again.";
+      const botResponseText = chatData.response || "I apologize, but I couldn't generate a response. Please try again.";
 
       // Step 3: Save bot response to backend
       const saveBotRes = await fetch("/api/chat", {
@@ -305,4 +293,3 @@ Be conversational, professional, and thorough. Guide the user through the requir
     </div>
   );
 }
-
