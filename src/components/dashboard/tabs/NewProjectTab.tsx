@@ -4,12 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { ChatInterface } from "../ChatInterface";
 
 interface NewProjectTabProps {
   projectStarted: boolean;
   setProjectStarted: (started: boolean) => void;
   projectName: string;
   setProjectName: (name: string) => void;
+  projectId: number | null;
+  setProjectId: (id: number | null) => void;
 }
 
 export function NewProjectTab({
@@ -17,10 +20,13 @@ export function NewProjectTab({
   setProjectStarted,
   projectName,
   setProjectName,
+  projectId,
+  setProjectId,
 }: NewProjectTabProps) {
   const { toast } = useToast();
+  const [creating, setCreating] = useState(false);
 
-  const handleStartProject = () => {
+  const handleStartProject = async () => {
     if (!projectName.trim()) {
       toast({
         title: "Project name required",
@@ -30,16 +36,47 @@ export function NewProjectTab({
       return;
     }
 
-    setProjectStarted(true);
-    toast({
-      title: `"${projectName}" is ready`,
-      description: "Start gathering requirements for your project.",
-    });
+    try {
+      setCreating(true);
+      
+      // Create project in database
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: projectName.trim(),
+          description: `Requirements gathering project: ${projectName}`,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.data) {
+        setProjectId(data.data.id);
+        setProjectStarted(true);
+        toast({
+          title: `"${projectName}" is ready`,
+          description: "Start gathering requirements for your project.",
+        });
+      } else {
+        throw new Error(data.error || "Failed to create project");
+      }
+    } catch (error) {
+      console.error("Failed to create project:", error);
+      toast({
+        title: "Failed to create project",
+        description: error instanceof Error ? error.message : "Could not create project.",
+        variant: "destructive",
+      });
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleBack = () => {
     setProjectStarted(false);
     setProjectName("");
+    setProjectId(null);
   };
 
   if (!projectStarted) {
@@ -66,8 +103,8 @@ export function NewProjectTab({
               />
             </div>
 
-            <Button onClick={handleStartProject} className="w-full">
-              Start Chat
+            <Button onClick={handleStartProject} className="w-full" disabled={creating}>
+              {creating ? "Creating..." : "Start Chat"}
             </Button>
           </div>
         </div>
@@ -87,17 +124,21 @@ export function NewProjectTab({
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-8 min-h-[400px] flex items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <MessageSquare className="h-8 w-8 text-primary" />
+      {projectId ? (
+        <ChatInterface projectId={projectId} projectName={projectName} />
+      ) : (
+        <div className="bg-card border border-border rounded-xl p-8 min-h-[400px] flex items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <MessageSquare className="h-8 w-8 text-primary" />
+            </div>
+            <h3 className="font-semibold text-foreground mb-2">Loading chat...</h3>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              Preparing the chat interface for your project.
+            </p>
           </div>
-          <h3 className="font-semibold text-foreground mb-2">Chat Interface</h3>
-          <p className="text-sm text-muted-foreground max-w-sm">
-            This is where the chat interface for gathering requirements would be displayed.
-          </p>
         </div>
-      </div>
+      )}
     </div>
   );
 }

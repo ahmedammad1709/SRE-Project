@@ -29,6 +29,7 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [projectStarted, setProjectStarted] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
+  const [projectId, setProjectId] = useState<number | null>(null);
   const [user, setUser] = useState<UserData>(DEFAULT_USER);
   const isAdmin = false;
 
@@ -70,6 +71,7 @@ export default function Dashboard() {
   const handleNewProject = () => {
     setProjectStarted(false);
     setNewProjectName("");
+    setProjectId(null);
     setActiveTab("new-project");
   };
 
@@ -86,6 +88,8 @@ export default function Dashboard() {
             setProjectStarted={setProjectStarted}
             projectName={newProjectName}
             setProjectName={setNewProjectName}
+            projectId={projectId}
+            setProjectId={setProjectId}
           />
         );
       case "summary":
