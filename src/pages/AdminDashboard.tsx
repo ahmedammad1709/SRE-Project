@@ -1,5 +1,6 @@
 import { useState } from "react";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import { useNavigate } from "react-router-dom";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { FolderOpen, Users, Ban, CheckCircle, Calendar, MessageSquare } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const dummyProjects = [
   {
@@ -106,7 +107,9 @@ const dummyUsers = [
 ];
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState("projects");
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"projects" | "users">("projects");
   const [users, setUsers] = useState(dummyUsers);
 
   const toggleUserStatus = (userId: string) => {
@@ -127,9 +130,30 @@ const AdminDashboard = () => {
     });
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("app_user");
+    toast({
+      title: "Logged out",
+      description: "You have been logged out successfully.",
+    });
+    navigate("/");
+  };
+
   return (
-    <DashboardLayout userName="Admin" isAdmin>
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background">
+      <DashboardHeader
+        userName="Admin"
+        isAdmin={true}
+        onMenuToggle={() => {}}
+        onLogout={handleLogout}
+      />
+
+      <div className="flex w-full pt-16">
+        <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
+          <div className="mb-8">
+            <h1 className="text-2xl font-semibold text-foreground mb-2">Admin Dashboard</h1>
+            <p className="text-muted-foreground">Manage all projects and users</p>
+          </div>
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
           <p className="text-muted-foreground">Manage all projects and users</p>
@@ -280,8 +304,9 @@ const AdminDashboard = () => {
             </div>
           </TabsContent>
         </Tabs>
+        </main>
       </div>
-    </DashboardLayout>
+    </div>
   );
 };
 

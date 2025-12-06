@@ -196,3 +196,35 @@
     transform: translateY(-10px);
   }
 }
+
+/* Dashboard specific styles */
+.glass-header {
+  background: hsl(var(--card) / 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.sidebar-item {
+  @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground transition-all duration-200;
+  @apply hover:bg-sidebar-accent hover:text-sidebar-accent-foreground;
+}
+
+.sidebar-item-active {
+  @apply bg-sidebar-accent text-sidebar-accent-foreground;
+  @apply font-semibold;
+}
+
+.centered-card {
+  @apply bg-card border border-border rounded-xl p-8 shadow-card w-full max-w-[550px];
+}
+
+.stat-card {
+  @apply bg-card border border-border rounded-xl p-6 shadow-card;
+  @apply transition-all duration-200 hover:shadow-card-hover;
+}
+
+.project-card {
+  @apply bg-card border border-border rounded-xl p-6 shadow-card;
+  @apply transition-all duration-200 hover:shadow-card-hover hover:border-primary/20;
+}
