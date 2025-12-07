@@ -24,28 +24,30 @@ function sendJSON(res, status, payload) {
 export default async function handler(req, res) {
   try {
     if (req.method === "GET") {
-      const { rows } = await pool.query("SELECT id, name, description, created_at FROM projects ORDER BY id ASC");
+      const { rows } = await pool.query(
+        "SELECT id, name, description, summary, created_by, created_at FROM projects ORDER BY id ASC"
+      );
       return sendJSON(res, 200, { success: true, data: rows });
     }
 
     if (req.method === "POST") {
       const body = await parseJSON(req);
-      const { name, description } = body;
+      const { name, description, created_by } = body;
       if (!name) return sendJSON(res, 400, { success: false, error: "name is required" });
       const { rows } = await pool.query(
-        "INSERT INTO projects (name, description) VALUES ($1, $2) RETURNING id, name, description, created_at",
-        [name, description ?? null]
+        "INSERT INTO projects (name, description, created_by) VALUES ($1, $2, $3) RETURNING id, name, description, summary, created_by, created_at",
+        [name, description ?? null, created_by ?? null]
       );
       return sendJSON(res, 201, { success: true, data: rows[0] });
     }
 
     if (req.method === "PUT") {
       const body = await parseJSON(req);
-      const { id, name, description } = body;
+      const { id, name, description, summary } = body;
       if (!id) return sendJSON(res, 400, { success: false, error: "id is required" });
       const { rows } = await pool.query(
-        "UPDATE projects SET name = COALESCE($2, name), description = COALESCE($3, description) WHERE id = $1 RETURNING id, name, description, created_at",
-        [id, name ?? null, description ?? null]
+        "UPDATE projects SET name = COALESCE($2, name), description = COALESCE($3, description), summary = COALESCE($4, summary) WHERE id = $1 RETURNING id, name, description, summary, created_by, created_at",
+        [id, name ?? null, description ?? null, summary ?? null]
       );
       if (!rows.length) return sendJSON(res, 404, { success: false, error: "project not found" });
       return sendJSON(res, 200, { success: true, data: rows[0] });

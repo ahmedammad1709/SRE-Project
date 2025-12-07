@@ -64,6 +64,15 @@ export function NewProjectTab({
         body: JSON.stringify({
           name: projectName.trim(),
           description: `Requirements gathering project: ${projectName}`,
+          created_by: (() => {
+            try {
+              const stored = localStorage.getItem("app_user");
+              const parsed = stored ? JSON.parse(stored) : null;
+              return parsed?.email ?? null;
+            } catch {
+              return null;
+            }
+          })(),
         }),
       });
 

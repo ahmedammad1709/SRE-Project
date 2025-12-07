@@ -200,12 +200,22 @@ export default async function handler(req, res) {
 
     try {
       const extractedData = await callGeminiForSummary(messages);
-      
+
+      // Persist summary JSON and clear chat history in a single transaction
+      await pool.query("BEGIN");
+      await pool.query(
+        "UPDATE projects SET summary = $2 WHERE id = $1",
+        [projectId, JSON.stringify(extractedData)]
+      );
+      await pool.query("DELETE FROM chat_messages WHERE project_id = $1", [projectId]);
+      await pool.query("COMMIT");
+
       return sendJSON(res, 200, {
         success: true,
         data: extractedData,
       });
     } catch (error) {
+      try { await pool.query("ROLLBACK"); } catch {}
       console.error("Gemini summary extraction error:", error);
       return sendJSON(res, 500, {
         success: false,
