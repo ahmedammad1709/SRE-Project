@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, Bot, User } from "lucide-react";
+import { Send, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -209,7 +209,11 @@ export function ChatInterface({ projectId, projectName }: ChatInterfaceProps) {
         ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center max-w-md">
-              <Bot className="h-12 w-12 text-primary mx-auto mb-4 opacity-50" />
+              <img
+                src="/logo.png"
+                alt="Software Requirement Bot"
+                className="h-12 w-12 mx-auto mb-4 rounded-xl object-contain opacity-80"
+              />
               <h3 className="font-semibold text-foreground mb-2">Start the conversation</h3>
               <p className="text-sm text-muted-foreground">
                 I'm here to help you gather requirements for "{projectName}". Ask me anything about your project!
@@ -224,8 +228,12 @@ export function ChatInterface({ projectId, projectName }: ChatInterfaceProps) {
                 className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 {message.role === "bot" && (
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Bot className="h-4 w-4 text-primary" />
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                    <img
+                      src="/logo.png"
+                      alt="Software Requirement Bot"
+                      className="h-5 w-5 object-contain"
+                    />
                   </div>
                 )}
                 <div
@@ -252,8 +260,12 @@ export function ChatInterface({ projectId, projectName }: ChatInterfaceProps) {
             ))}
             {loading && (
               <div className="flex gap-3 justify-start">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Bot className="h-4 w-4 text-primary" />
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                  <img
+                    src="/logo.png"
+                    alt="Software Requirement Bot"
+                    className="h-5 w-5 object-contain"
+                  />
                 </div>
                 <div className="bg-muted rounded-lg px-4 py-2">
                   <div className="flex gap-1">

@@ -1,4 +1,4 @@
-import { Menu, Bot, LogOut, User } from "lucide-react";
+import { Menu, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -42,9 +42,11 @@ export function DashboardHeader({ userName, isAdmin, onMenuToggle, onLogout }: D
           </Button>
           
           <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-primary text-primary-foreground">
-              <Bot className="h-5 w-5" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="Software Requirement Bot"
+              className="h-9 w-9 rounded-lg object-contain"
+            />
             <span className="font-semibold text-foreground hidden sm:block">
               Software Requirement Bot
             </span>
