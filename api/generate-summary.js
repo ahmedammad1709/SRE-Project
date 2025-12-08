@@ -29,14 +29,15 @@ async function callChatGPTForSummary(conversationHistory) {
 
   const systemPrompt = `You are tasked with summarizing the following chat into a structured project summary.
 Extract key information from the chat and organize it under these headings:
-1. Functional Requirements
-2. Non-Functional Requirements
-3. Stakeholders
-4. Risks & Challenges
-5. User Stories
-6. Timeline
-7. Cost Estimate
-8. Constraints
+1. Project Overview
+2. Functional Requirements
+3. Non-Functional Requirements
+4. Stakeholders
+5. Risks & Challenges
+6. User Stories
+7. Timeline
+8. Cost Estimate
+9. Constraints
 
 Rules:
 - For any missing data in the chat (e.g., Timeline or Cost Estimate), you MUST provide intelligent approximate values based on:
@@ -53,6 +54,7 @@ Rules:
 
 JSON Format Example:
 {
+  "Project Overview": "One short descriptive paragraph that summarizes the project goal and problem statement",
   "Functional Requirements": [
     "User registration and authentication system",
     "Product catalog with search and filtering",
@@ -153,7 +155,7 @@ ${JSON.stringify(conversationHistory, null, 2)}`;
     });
 
     return {
-      overview: "",
+      overview: typeof raw["Project Overview"] === "string" ? raw["Project Overview"] : "",
       functional: Array.isArray(raw["Functional Requirements"]) ? raw["Functional Requirements"] : [],
       nonFunctional: Array.isArray(raw["Non-Functional Requirements"]) ? raw["Non-Functional Requirements"] : [],
       stakeholders: normalizedStakeholders,
@@ -189,14 +191,15 @@ async function callGeminiForSummary(conversationHistory) {
 
   const systemPrompt = `You are tasked with summarizing the following chat into a structured project summary.
 Extract key information from the chat and organize it under these headings:
-1. Functional Requirements
-2. Non-Functional Requirements
-3. Stakeholders
-4. Risks & Challenges
-5. User Stories
-6. Timeline
-7. Cost Estimate
-8. Constraints
+1. Project Overview
+2. Functional Requirements
+3. Non-Functional Requirements
+4. Stakeholders
+5. Risks & Challenges
+6. User Stories
+7. Timeline
+8. Cost Estimate
+9. Constraints
 
 Rules:
 - For any missing data in the chat (e.g., Timeline or Cost Estimate), you MUST provide intelligent approximate values based on:
@@ -213,6 +216,7 @@ Rules:
 
 JSON Format Example:
 {
+  "Project Overview": "One short descriptive paragraph that summarizes the project goal and problem statement",
   "Functional Requirements": [
     "User registration and authentication system",
     "Product catalog with search and filtering",
@@ -301,7 +305,7 @@ ${JSON.stringify(conversationHistory, null, 2)}`;
     });
 
     return {
-      overview: "",
+      overview: typeof raw["Project Overview"] === "string" ? raw["Project Overview"] : "",
       functional: Array.isArray(raw["Functional Requirements"]) ? raw["Functional Requirements"] : [],
       nonFunctional: Array.isArray(raw["Non-Functional Requirements"]) ? raw["Non-Functional Requirements"] : [],
       stakeholders: normalizedStakeholders,

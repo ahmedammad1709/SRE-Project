@@ -26,7 +26,7 @@ interface Project {
 interface ProjectsTabProps {
   userEmail: string;
   onNewProject: () => void;
-  onViewSummary: (projectId: number, summaryData: any) => void;
+  onViewSummary: (projectId: number, summaryData: any, projectName: string) => void;
 }
 
 export function ProjectsTab({ userEmail, onNewProject, onViewSummary }: ProjectsTabProps) {
@@ -67,7 +67,7 @@ export function ProjectsTab({ userEmail, onNewProject, onViewSummary }: Projects
     try {
       if (project.summary) {
         const summaryData = JSON.parse(project.summary);
-        onViewSummary(project.id, summaryData);
+        onViewSummary(project.id, summaryData, project.name);
       } else {
         toast({
           title: "No Summary Available",

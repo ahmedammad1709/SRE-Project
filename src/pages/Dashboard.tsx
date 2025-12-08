@@ -87,7 +87,9 @@ export default function Dashboard() {
     setActiveTab("new-project");
   };
 
-  const handleViewSummary = (projectId: number, summaryData: any) => {
+  const handleViewSummary = (projectId: number, summaryData: any, projectName: string) => {
+    setProjectId(projectId);
+    setNewProjectName(projectName || "");
     setSummaryData(summaryData);
     setActiveTab("summary");
   };
@@ -118,7 +120,15 @@ export default function Dashboard() {
           />
         );
       case "summary":
-        return <SummaryTab onNewProject={handleNewProject} initialData={summaryData || undefined} />;
+        return (
+          <SummaryTab
+            onNewProject={handleNewProject}
+            initialData={summaryData || undefined}
+            clientName={user.name}
+            clientEmail={user.email}
+            projectName={newProjectName}
+          />
+        );
       case "settings":
         return (
           <SettingsTab

@@ -8,6 +8,8 @@ const routes = {
   "/api/users": () => import("../api/users.js"),
   "/api/projects": () => import("../api/projects.js"),
   "/api/chat": () => import("../api/chat.js"),
+  "/api/generate-summary": () => import("../api/generate-summary.js"),
+  "/api/generate-report": () => import("../api/generate-report.js"),
 };
 
 const server = http.createServer(async (req, res) => {

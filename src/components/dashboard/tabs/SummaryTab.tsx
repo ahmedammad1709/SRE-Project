@@ -7,6 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 interface SummaryTabProps {
   onNewProject: () => void;
   initialData?: ExtractedData;
+  clientName: string;
+  clientEmail: string;
+  projectName: string;
 }
 
 interface ExtractedData {
@@ -22,7 +25,7 @@ interface ExtractedData {
   summary?: string;
 }
 
-export function SummaryTab({ onNewProject, initialData }: SummaryTabProps) {
+export function SummaryTab({ onNewProject, initialData, clientName, clientEmail, projectName }: SummaryTabProps) {
   const { toast } = useToast();
   const [generatingPDF, setGeneratingPDF] = useState(false);
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(initialData ?? null);
@@ -54,7 +57,12 @@ export function SummaryTab({ onNewProject, initialData }: SummaryTabProps) {
       const response = await fetch("/api/generate-report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ extractedData }),
+        body: JSON.stringify({
+          extractedData,
+          clientName,
+          clientEmail,
+          projectName,
+        }),
       });
 
       if (!response.ok) {

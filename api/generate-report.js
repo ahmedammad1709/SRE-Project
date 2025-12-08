@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     }
 
     const body = await parseJSON(req);
-    const { extractedData } = body;
+    const { extractedData, clientName, clientEmail, projectName } = body;
 
     if (!extractedData) {
       res.statusCode = 400;
@@ -44,8 +44,9 @@ export default async function handler(req, res) {
 
     // Create a new PDF document
     const pdfDoc = await PDFDocument.create();
-    let page = pdfDoc.addPage([612, 792]); // US Letter size
-    const { width, height } = page.getSize();
+    const width = 612;
+    const height = 792;
+    let page;
 
     // Load fonts
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -117,31 +118,62 @@ export default async function handler(req, res) {
     }
 
     // Title Page
-    const titlePage = pdfDoc.addPage([612, 792]);
-    const titleY = titlePage.getSize().height / 2 + 50;
-    titlePage.drawText("Software Requirements Specification", {
-      x: margin,
-      y: titleY + 50,
-      size: 24,
+    const titlePage = pdfDoc.addPage([width, height]);
+    const titleY = height / 2 + 60;
+    const mainTitle = "Software Requirements Specification";
+    const subTitle = "(SRS) Report";
+    const mainTitleSize = 26;
+    const subTitleSize = 22;
+    const mainTitleX = (width - helveticaBoldFont.widthOfTextAtSize(mainTitle, mainTitleSize)) / 2;
+    const subTitleX = (width - helveticaBoldFont.widthOfTextAtSize(subTitle, subTitleSize)) / 2;
+    titlePage.drawText(mainTitle, {
+      x: mainTitleX,
+      y: titleY + 40,
+      size: mainTitleSize,
       font: helveticaBoldFont,
       color: rgb(0, 0, 0),
     });
-    titlePage.drawText("(SRS) Report", {
-      x: margin,
+    titlePage.drawText(subTitle, {
+      x: subTitleX,
       y: titleY,
-      size: 24,
+      size: subTitleSize,
       font: helveticaBoldFont,
       color: rgb(0, 0, 0),
+    });
+    const detailsStartY = titleY - 30;
+    const nameText = `Client: ${clientName || "N/A"}`;
+    const emailText = `Email: ${clientEmail || "N/A"}`;
+    const projectText = `Project: ${projectName || "N/A"}`;
+    titlePage.drawText(projectText, {
+      x: margin,
+      y: detailsStartY,
+      size: 12,
+      font: helveticaFont,
+      color: rgb(0.2, 0.2, 0.2),
+    });
+    titlePage.drawText(nameText, {
+      x: margin,
+      y: detailsStartY - 20,
+      size: 12,
+      font: helveticaFont,
+      color: rgb(0.2, 0.2, 0.2),
+    });
+    titlePage.drawText(emailText, {
+      x: margin,
+      y: detailsStartY - 40,
+      size: 12,
+      font: helveticaFont,
+      color: rgb(0.2, 0.2, 0.2),
     });
     titlePage.drawText(`Generated on: ${new Date().toLocaleDateString()}`, {
       x: margin,
-      y: titleY - 50,
+      y: detailsStartY - 60,
       size: 12,
       font: helveticaFont,
       color: rgb(0.5, 0.5, 0.5),
     });
 
-    // Reset to first content page
+    page = pdfDoc.addPage([width, height]);
     yPosition = height - 50;
 
     // Table of Contents (simplified)
