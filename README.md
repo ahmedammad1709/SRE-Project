@@ -60,6 +60,16 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Environment Variables
+
+This project requires the following environment variables. Copy `.env.example` to `.env` and fill in your values:
+
+- `VITE_GEMINI_API_KEY` or `GEMINI_API_KEY` - Your Google Gemini API key (primary AI provider)
+- `VITE_CHATGPT_API_KEY` or `CHATGPT_API_KEY` - Your OpenAI ChatGPT API key (fallback when Gemini fails)
+- Database configuration variables (DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, DB_SSL)
+
+**Note**: The application will automatically fallback to ChatGPT if Gemini API fails, ensuring uninterrupted service.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/d5be3cc0-ef8a-498d-9410-306d7c3593f6) and click on Share -> Publish.

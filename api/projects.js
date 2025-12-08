@@ -24,9 +24,20 @@ function sendJSON(res, status, payload) {
 export default async function handler(req, res) {
   try {
     if (req.method === "GET") {
-      const { rows } = await pool.query(
-        "SELECT id, name, description, summary, created_by, created_at FROM projects ORDER BY id ASC"
-      );
+      const url = new URL(req.url, "http://localhost");
+      const email = url.searchParams.get("email");
+      
+      let query = "SELECT id, name, description, summary, created_by, created_at FROM projects";
+      let params = [];
+      
+      if (email) {
+        query += " WHERE created_by = $1";
+        params.push(email);
+      }
+      
+      query += " ORDER BY created_at DESC";
+      
+      const { rows } = await pool.query(query, params);
       return sendJSON(res, 200, { success: true, data: rows });
     }
 

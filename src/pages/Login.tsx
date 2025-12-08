@@ -146,9 +146,9 @@ const Login = () => {
           </p>
         </div>
 
-        <p className="text-center text-muted-foreground text-xs mt-6">
+        {/* <p className="text-center text-muted-foreground text-xs mt-6">
           Demo: Use any email/password for user, or admin@admin.com / admin for admin
-        </p>
+        </p> */}
       </div>
     </div>
   );

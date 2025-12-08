@@ -87,12 +87,23 @@ export default function Dashboard() {
     setActiveTab("new-project");
   };
 
+  const handleViewSummary = (projectId: number, summaryData: any) => {
+    setSummaryData(summaryData);
+    setActiveTab("summary");
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case "overview":
-        return <OverviewTab projects={dummyProjects} />;
+        return <OverviewTab userEmail={user.email} />;
       case "projects":
-        return <ProjectsTab projects={dummyProjects} onNewProject={handleNewProject} />;
+        return (
+          <ProjectsTab
+            userEmail={user.email}
+            onNewProject={handleNewProject}
+            onViewSummary={handleViewSummary}
+          />
+        );
       case "new-project":
         return (
           <NewProjectTab

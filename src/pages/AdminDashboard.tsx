@@ -1,133 +1,56 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { FolderOpen, Users, Ban, CheckCircle, Calendar, MessageSquare } from "lucide-react";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminOverviewTab } from "@/components/admin/tabs/AdminOverviewTab";
+import { AdminUsersTab } from "@/components/admin/tabs/AdminUsersTab";
+import { AdminProjectsTab } from "@/components/admin/tabs/AdminProjectsTab";
+import { AdminSettingsTab } from "@/components/admin/tabs/AdminSettingsTab";
 import { useToast } from "@/hooks/use-toast";
 
-const dummyProjects = [
-  {
-    id: "1",
-    name: "E-Commerce Platform",
-    owner: "John Doe",
-    chats: 12,
-    requirements: 24,
-    createdAt: "Nov 15, 2024",
-    status: "active",
-  },
-  {
-    id: "2",
-    name: "Healthcare App",
-    owner: "Jane Smith",
-    chats: 8,
-    requirements: 18,
-    createdAt: "Nov 20, 2024",
-    status: "active",
-  },
-  {
-    id: "3",
-    name: "CRM System",
-    owner: "Bob Wilson",
-    chats: 15,
-    requirements: 32,
-    createdAt: "Nov 10, 2024",
-    status: "active",
-  },
-  {
-    id: "4",
-    name: "Learning Platform",
-    owner: "Alice Brown",
-    chats: 6,
-    requirements: 14,
-    createdAt: "Nov 25, 2024",
-    status: "archived",
-  },
-  {
-    id: "5",
-    name: "Inventory System",
-    owner: "Charlie Davis",
-    chats: 10,
-    requirements: 20,
-    createdAt: "Nov 28, 2024",
-    status: "active",
-  },
-];
+type AdminTabValue = "overview" | "users" | "projects" | "settings";
 
-const dummyUsers = [
-  {
-    id: "1",
-    name: "John Doe",
-    email: "john.doe@example.com",
-    projects: 3,
-    joinedAt: "Oct 15, 2024",
-    status: "active",
-  },
-  {
-    id: "2",
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    projects: 2,
-    joinedAt: "Oct 20, 2024",
-    status: "active",
-  },
-  {
-    id: "3",
-    name: "Bob Wilson",
-    email: "bob.wilson@example.com",
-    projects: 1,
-    joinedAt: "Nov 1, 2024",
-    status: "blocked",
-  },
-  {
-    id: "4",
-    name: "Alice Brown",
-    email: "alice.brown@example.com",
-    projects: 4,
-    joinedAt: "Nov 5, 2024",
-    status: "active",
-  },
-  {
-    id: "5",
-    name: "Charlie Davis",
-    email: "charlie.davis@example.com",
-    projects: 1,
-    joinedAt: "Nov 10, 2024",
-    status: "active",
-  },
-];
+interface UserData {
+  name: string;
+  email: string;
+}
 
-const AdminDashboard = () => {
+const DEFAULT_USER: UserData = {
+  name: "Admin",
+  email: "admin@example.com",
+};
+
+export default function AdminDashboard() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"projects" | "users">("projects");
-  const [users, setUsers] = useState(dummyUsers);
+  const [activeTab, setActiveTab] = useState<AdminTabValue>("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState<UserData>(DEFAULT_USER);
 
-  const toggleUserStatus = (userId: string) => {
-    setUsers((prev) =>
-      prev.map((user) =>
-        user.id === userId
-          ? { ...user, status: user.status === "active" ? "blocked" : "active" }
-          : user
-      )
-    );
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("app_user");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.name && parsed.email) {
+          setUser(parsed);
+        }
+      }
+    } catch {
+      void 0;
+    }
 
-    const user = users.find((u) => u.id === userId);
-    const newStatus = user?.status === "active" ? "blocked" : "unblocked";
-    
-    toast({
-      title: `User ${newStatus}`,
-      description: `${user?.name} has been ${newStatus}`,
-    });
+    // Apply saved theme
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    }
+  }, []);
+
+  const handleSaveProfile = (name: string, email: string) => {
+    const userData = { name, email };
+    setUser(userData);
+    localStorage.setItem("app_user", JSON.stringify(userData));
   };
 
   const handleLogout = () => {
@@ -139,175 +62,48 @@ const AdminDashboard = () => {
     navigate("/");
   };
 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "overview":
+        return <AdminOverviewTab />;
+      case "users":
+        return <AdminUsersTab />;
+      case "projects":
+        return <AdminProjectsTab />;
+      case "settings":
+        return (
+          <AdminSettingsTab
+            userName={user.name}
+            userEmail={user.email}
+            onSaveProfile={handleSaveProfile}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <DashboardHeader
-        userName="Admin"
+        userName={user.name}
         isAdmin={true}
-        onMenuToggle={() => {}}
+        onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         onLogout={handleLogout}
       />
 
       <div className="flex w-full pt-16">
+        <AdminSidebar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+
         <main className="flex-1 w-full p-4 sm:p-6 lg:p-8">
-          <div className="mb-8">
-            <h1 className="text-2xl font-semibold text-foreground mb-2">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Manage all projects and users</p>
-          </div>
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage all projects and users</p>
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-secondary/50 p-1 rounded-xl">
-            <TabsTrigger value="projects" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">
-              <FolderOpen className="w-4 h-4 mr-2" />
-              Projects
-            </TabsTrigger>
-            <TabsTrigger value="users" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">
-              <Users className="w-4 h-4 mr-2" />
-              Manage Users
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Projects Tab */}
-          <TabsContent value="projects" className="animate-fade-in">
-            <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden">
-              <div className="p-4 border-b border-border">
-                <h2 className="text-lg font-semibold">All Projects</h2>
-                <p className="text-sm text-muted-foreground">{dummyProjects.length} total projects</p>
-              </div>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Project Name</TableHead>
-                      <TableHead>Owner</TableHead>
-                      <TableHead className="text-center">Chats</TableHead>
-                      <TableHead className="text-center">Requirements</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {dummyProjects.map((project) => (
-                      <TableRow key={project.id}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                              <FolderOpen className="w-4 h-4" />
-                            </div>
-                            {project.name}
-                          </div>
-                        </TableCell>
-                        <TableCell>{project.owner}</TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
-                            {project.chats}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">{project.requirements}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <Calendar className="w-3.5 h-3.5" />
-                            {project.createdAt}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={project.status === "active" ? "default" : "secondary"}
-                            className={project.status === "active" ? "bg-success/10 text-success hover:bg-success/20" : ""}
-                          >
-                            {project.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* Users Tab */}
-          <TabsContent value="users" className="animate-fade-in">
-            <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden">
-              <div className="p-4 border-b border-border">
-                <h2 className="text-lg font-semibold">Manage Users</h2>
-                <p className="text-sm text-muted-foreground">{users.length} registered users</p>
-              </div>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead className="text-center">Projects</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
-                              {user.name.split(" ").map((n) => n[0]).join("")}
-                            </div>
-                            {user.name}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                        <TableCell className="text-center">{user.projects}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <Calendar className="w-3.5 h-3.5" />
-                            {user.joinedAt}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={user.status === "active" ? "default" : "destructive"}
-                            className={user.status === "active" ? "bg-success/10 text-success hover:bg-success/20" : ""}
-                          >
-                            {user.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant={user.status === "active" ? "outline" : "default"}
-                            size="sm"
-                            onClick={() => toggleUserStatus(user.id)}
-                          >
-                            {user.status === "active" ? (
-                              <>
-                                <Ban className="w-4 h-4 mr-1" />
-                                Block
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle className="w-4 h-4 mr-1" />
-                                Unblock
-                              </>
-                            )}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+          {renderTabContent()}
         </main>
       </div>
     </div>
   );
-};
-
-export default AdminDashboard;
+}

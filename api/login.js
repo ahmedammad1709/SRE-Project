@@ -37,7 +37,7 @@ export default async function handler(req, res) {
     if (!rows.length) return sendJSON(res, 401, { success: false, error: "Invalid credentials" });
 
     const user = rows[0];
-    if (user.isblocked) return sendJSON(res, 403, { success: false, error: "Account not verified" });
+    if (user.isblocked) return sendJSON(res, 403, { success: false, error: "Admin have banned you contact admin" });
 
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return sendJSON(res, 401, { success: false, error: "Invalid credentials" });
