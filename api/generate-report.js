@@ -1,5 +1,63 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
+async function callChatGPTOverview(projectName, extractedData) {
+  const apiKey = process.env.VITE_CHATGPT_API_KEY || process.env.CHATGPT_API_KEY;
+  if (!apiKey) throw new Error("ChatGPT API key is not configured");
+  const context = JSON.stringify(extractedData || {});
+  const prompt = `Generate a concise one-paragraph Project Overview for a software project named "${projectName || "N/A"}". The paragraph should clearly state the goal and the problem it solves. Use this context if helpful: ${context}. Return only plain text, one paragraph.`;
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "You return only concise plain text, no markdown, no lists." },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.3,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `ChatGPT error: ${res.statusText}`);
+  }
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content?.trim() || "";
+  return text;
+}
+
+async function callGeminiOverview(projectName, extractedData) {
+  const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("Gemini API key is not configured");
+  const context = JSON.stringify(extractedData || {});
+  const prompt = `Generate a concise one-paragraph Project Overview for a software project named "${projectName || "N/A"}". The paragraph should clearly state the goal and the problem it solves. Use this context if helpful: ${context}. Return only plain text, one paragraph.`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Gemini error: ${res.statusText}`);
+  }
+  const data = await res.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+  return text;
+}
+
+async function callOverviewWithFallback(projectName, extractedData) {
+  try {
+    return await callGeminiOverview(projectName, extractedData);
+  } catch (gErr) {
+    try {
+      return await callChatGPTOverview(projectName, extractedData);
+    } catch (oErr) {
+      throw new Error(`AI down: ${gErr.message}; ${oErr.message}`);
+    }
+  }
+}
+
 async function parseJSON(req) {
   return new Promise((resolve, reject) => {
     let data = "";
@@ -95,7 +153,7 @@ export default async function handler(req, res) {
         font: helveticaBoldFont,
         color: rgb(0, 0, 0),
       });
-      yPosition -= 10;
+      yPosition -= 18;
 
       // Section content
       if (isList && Array.isArray(content) && content.length > 0) {
@@ -176,7 +234,7 @@ export default async function handler(req, res) {
     page = pdfDoc.addPage([width, height]);
     yPosition = height - 50;
 
-    // Table of Contents (simplified)
+    // Table of Contents
     page.drawText("Table of Contents", {
       x: margin,
       y: yPosition,
@@ -210,13 +268,21 @@ export default async function handler(req, res) {
 
     yPosition -= sectionSpacing;
 
-    // Executive Summary (if available)
+    // Executive Summary
     if (extractedData.summary) {
       addSection("1. Executive Summary", extractedData.summary);
     }
 
-    // Project Overview
-    addSection(extractedData.summary ? "2. Project Overview" : "1. Project Overview", extractedData.overview || "Not provided");
+    let overviewText = (extractedData.overview || "").trim();
+    if (!overviewText) {
+      try {
+        overviewText = await callOverviewWithFallback(projectName, extractedData);
+        if (!overviewText) overviewText = "AI service down";
+      } catch {
+        overviewText = "AI service down";
+      }
+    }
+    addSection(extractedData.summary ? "2. Project Overview" : "1. Project Overview", overviewText);
 
     // Functional Requirements
     addSection(extractedData.summary ? "3. Functional Requirements" : "2. Functional Requirements", extractedData.functional || [], true);
