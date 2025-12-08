@@ -115,19 +115,20 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
+    <div className="min-h-screen gradient-hero flex flex-col">
+      <header className="w-screen px-4 py-4">
+        <div className="mx-auto max-w-6xl flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="Softwate Requiremnet Bot" className="w-12 h-12 rounded-xl object-contain" />
             <span className="font-semibold text-2xl">Softwate Requiremnet Bot</span>
           </Link>
           <ThemeToggle />
         </div>
+      </header>
 
-        {/* Signup Card */}
-        <div className="bg-card rounded-2xl shadow-card p-8 border border-border animate-slide-up">
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="bg-card rounded-2xl shadow-card p-8 border border-border animate-slide-up">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold mb-2">Create your account</h1>
             <p className="text-muted-foreground">Start gathering requirements smarter</p>
@@ -265,12 +266,13 @@ const Signup = () => {
             </div>
           )}
 
-          <p className="text-center text-muted-foreground text-sm mt-6">
+            <p className="text-center text-muted-foreground text-sm mt-6">
             Already have an account?{" "}
             <Link to="/login" className="text-primary hover:underline font-medium">
               Sign in
             </Link>
-          </p>
+            </p>
+          </div>
         </div>
       </div>
     </div>
