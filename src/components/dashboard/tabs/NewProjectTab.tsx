@@ -6,6 +6,16 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useConversation } from "@/contexts/ConversationContext";
 import { ChatInterface } from "../ChatInterface";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface NewProjectTabProps {
   projectStarted: boolean;
@@ -43,6 +53,7 @@ export function NewProjectTab({
   const { resetConversation, setProjectId: setContextProjectId } = useConversation();
   const [creating, setCreating] = useState(false);
   const [generatingSummary, setGeneratingSummary] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   const handleStartProject = async () => {
     if (!projectName.trim()) {
@@ -157,7 +168,7 @@ export function NewProjectTab({
         </div>
         <Button
           className="gap-2"
-          onClick={async () => {
+          onClick={() => {
             if (!projectId) {
               return toast({
                 title: "No project",
@@ -165,32 +176,7 @@ export function NewProjectTab({
                 variant: "destructive",
               });
             }
-            try {
-              setGeneratingSummary(true);
-              const res = await fetch("/api/generate-summary", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ projectId }),
-              });
-              const data = await res.json();
-              if (!data.success) {
-                throw new Error(data.error || "Failed to generate summary");
-              }
-              onSummaryReady?.(data.data);
-              toast({
-                title: "Summary generated",
-                description: "Redirecting to the Summary tab.",
-              });
-              onGoToSummary?.();
-            } catch (error) {
-              toast({
-                title: "Failed to generate summary",
-                description: error instanceof Error ? error.message : "Could not generate summary.",
-                variant: "destructive",
-              });
-            } finally {
-              setGeneratingSummary(false);
-            }
+            setConfirmDialogOpen(true);
           }}
           disabled={generatingSummary}
         >
@@ -198,6 +184,55 @@ export function NewProjectTab({
           {generatingSummary ? "Generating…" : "Generate Summary"}
         </Button>
       </div>
+
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Generate Project Summary</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you have shared all relevant details? Incomplete discussion may result in missing items in the summary. Do you want to proceed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={generatingSummary}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={generatingSummary}
+              onClick={async () => {
+                try {
+                  setGeneratingSummary(true);
+                  const res = await fetch("/api/generate-summary", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ projectId }),
+                  });
+                  const data = await res.json();
+                  if (!data.success) {
+                    throw new Error(data.error || "Failed to generate summary");
+                  }
+                  onSummaryReady?.(data.data);
+                  toast({
+                    title: "Summary generated",
+                    description: "Redirecting to the Summary tab.",
+                  });
+                  onGoToSummary?.();
+                } catch (error) {
+                  toast({
+                    title: "Failed to generate summary",
+                    description: error instanceof Error ? error.message : "Could not generate summary.",
+                    variant: "destructive",
+                  });
+                } finally {
+                  setGeneratingSummary(false);
+                  setConfirmDialogOpen(false);
+                }
+              }}
+              className="gap-2"
+            >
+              {generatingSummary ? "Generating…" : "Yes, Generate"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {projectId ? (
         <ChatInterface projectId={projectId} projectName={projectName} />
